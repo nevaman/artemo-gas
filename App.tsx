@@ -76,6 +76,8 @@ const App: React.FC = () => {
     const fetchData = useCallback(async () => {
         if (!session) return;
         try {
+            console.log('Fetching data for user:', session.user.id);
+            
             const { data: toolsData, error: toolsError } = await supabase.functions.invoke('get-tools');
             if (toolsError) throw toolsError;
             setAllTools(toolsData);
@@ -99,6 +101,16 @@ const App: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching data:', error);
+            // Don't fail completely if edge functions aren't working
+            // Set some default data so the app still works
+            if (allTools.length === 0) {
+                setAllTools([]);
+                setFeaturedTools([]);
+                setRecentTools([]);
+                setFavoriteToolIds([]);
+                setProjects([]);
+                setChatHistory([]);
+            }
         }
     }, [session]);
 

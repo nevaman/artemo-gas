@@ -14,13 +14,19 @@ export const AuthView: React.FC = () => {
     setMessage('');
 
     try {
+      console.log('Attempting authentication...', { isSignUp, email });
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: undefined // Disable email confirmation
+          }
         });
         if (error) throw error;
-        setMessage('Check your email for the confirmation link!');
+        setMessage('Account created successfully! You can now sign in.');
+        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -29,6 +35,7 @@ export const AuthView: React.FC = () => {
         if (error) throw error;
       }
     } catch (error: any) {
+      console.error('Authentication error:', error);
       setMessage(error.message);
     } finally {
       setLoading(false);
