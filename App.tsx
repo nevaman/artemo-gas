@@ -76,29 +76,17 @@ const App: React.FC = () => {
     const fetchData = useCallback(async () => {
         if (!session) return;
         try {
-            const { data: toolsData, error: toolsError } = await supabase.functions.invoke('get-tools', {
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
-            });
+            const { data: toolsData, error: toolsError } = await supabase.functions.invoke('get-tools');
             if (toolsError) throw toolsError;
             setAllTools(toolsData);
 
-            const { data: dashboardData, error: dashboardError } = await supabase.functions.invoke('get-dashboard-data', {
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
-            });
+            const { data: dashboardData, error: dashboardError } = await supabase.functions.invoke('get-dashboard-data');
             if (dashboardError) throw dashboardError;
             setFeaturedTools(dashboardData.featuredTools.map((ft: any) => ft.tools));
             setRecentTools(dashboardData.recentTools);
             setFavoriteToolIds(dashboardData.favoriteToolIds);
             
-            const { data: sidebarData, error: sidebarError } = await supabase.functions.invoke('get-sidebar-data', {
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
-            });
+            const { data: sidebarData, error: sidebarError } = await supabase.functions.invoke('get-sidebar-data');
             if (sidebarError) throw sidebarError;
             setProjects(sidebarData.projects);
             setChatHistory(sidebarData.chatHistory.map((h: any) => ({
@@ -111,9 +99,6 @@ const App: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching data:', error);
-            // Fallback to empty data instead of breaking the app
-            setAllTools([]);
-            setProjects([]);
         }
     }, [session]);
 
@@ -154,15 +139,10 @@ const App: React.FC = () => {
         const newFavorites = isFavorite ? favoriteToolIds.filter(id => id !== toolId) : [...favoriteToolIds, toolId];
         setFavoriteToolIds(newFavorites); // Optimistic update
 
-        try {
-            const { error } = await supabase.functions.invoke('manage-favorite', {
-                body: { tool_id: toolId, is_favorite: !isFavorite },
-                headers: {
-                    Authorization: `Bearer ${session!.access_token}`
-                }
-            });
-            if (error) throw error;
-        } catch (error) {
+        const { error } = await supabase.functions.invoke('manage-favorite', {
+            body: { tool_id: toolId, is_favorite: !isFavorite }
+        });
+        if (error) {
             console.error('Error toggling favorite:', error);
             setFavoriteToolIds(favoriteToolIds); // Revert on error
         }
