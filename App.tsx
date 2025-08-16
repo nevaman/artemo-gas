@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MainContent } from './components/MainContent';
@@ -68,16 +67,26 @@ const App: React.FC = () => {
     const [featuredTools, setFeaturedTools] = useState<any[]>([]);
     
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+        console.log('Setting up auth listener...');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log('Initial session:', session);
+            setSession(session);
+        });
+        
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            console.log('Auth state changed:', _event, session);
+            setSession(session);
+        });
+        
         return () => subscription.unsubscribe();
     }, []);
     
     const fetchData = useCallback(async () => {
         if (!session) return;
+        
+        console.log('Fetching data for user:', session.user.id);
+        
         try {
-            console.log('Fetching data for user:', session.user.id);
-            
             const { data: toolsData, error: toolsError } = await supabase.functions.invoke('get-tools');
             if (toolsError) throw toolsError;
             setAllTools(toolsData);
@@ -101,16 +110,14 @@ const App: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching data:', error);
-            // Don't fail completely if edge functions aren't working
-            // Set some default data so the app still works
-            if (allTools.length === 0) {
-                setAllTools([]);
-                setFeaturedTools([]);
-                setRecentTools([]);
-                setFavoriteToolIds([]);
-                setProjects([]);
-                setChatHistory([]);
-            }
+            
+            // Set default data if edge functions fail
+            setAllTools([]);
+            setFeaturedTools([]);
+            setRecentTools([]);
+            setFavoriteToolIds([]);
+            setProjects([]);
+            setChatHistory([]);
         }
     }, [session]);
 
