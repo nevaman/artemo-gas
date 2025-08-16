@@ -22,7 +22,10 @@ export const AuthView: React.FC = () => {
           email,
           password,
           options: {
-            emailRedirectTo: undefined
+            emailRedirectTo: undefined,
+            data: {
+              email_confirm: false
+            }
           }
         });
         
@@ -30,12 +33,9 @@ export const AuthView: React.FC = () => {
         
         if (error) throw error;
         
-        if (data.user && !data.session) {
-          setMessage('Please check your email to confirm your account, then sign in.');
-        } else {
-          setMessage('Account created successfully! You can now sign in.');
+        if (data.user) {
+          setMessage('Account created successfully! You are now signed in.');
         }
-        setIsSignUp(false);
       } else {
         console.log('Attempting sign in...');
         const { data, error } = await supabase.auth.signInWithPassword({
